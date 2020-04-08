@@ -1,19 +1,23 @@
-const Telegraf = require('telegraf');
-const bot = new Telegraf('1118722234:AAEus4ZJkLSvH9pBIvFYvAnGpDmO2wM1JzA')
-var process = require('child_process');
+var express = require('express');
+var app = express();
+var server = require('http').createServer(app);
+var io = require('socket.io').listen(server);
 
+server.listen(1500);
 
-bot.command('ipconfig',(ctx)=>{
-    process.exec('ipconfig',function (err,stdout,stderr) {
-        if (err) {
-            console.log("\n"+stderr);
-            return ctx.reply("\n"+stderr);
-        } else {
-            console.log(stdout);
-            return ctx.reply(stdout);
-        }
-    })
+app.use(express.static(__dirname + '/public')); 
 
+connections = [];
 
-})
-bot.launch();
+io.sockets.on('connection', function(socket) {
+	console.log("connect");
+	connections.push(socket);
+	socket.on('disconnect', function(data) {
+		connections.splice(connections.indexOf(socket), 1);
+		console.log("disconnect");
+	});
+
+	socket.on('send mess', function(data) {
+		io.sockets.emit('add mess', {mess: data.mess, name: data.name, className: data.className});
+	});
+});
